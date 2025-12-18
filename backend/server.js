@@ -114,6 +114,7 @@ app.post('/api/forgotpassword', async (req, res) => {
       return res.status(404).json({ message: 'Email not registered' });
     }
 
+    
     /* ==========================
        Generate new password
     ========================== */

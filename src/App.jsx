@@ -6,6 +6,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [dbStatus, setDbStatus] = useState('Checking DB...');
 
+  
 useEffect(() => {
   fetch('http://127.0.0.1:3001/api/health/db')  // Use 127.0.0.1, not localhost
     .then(async res => {
