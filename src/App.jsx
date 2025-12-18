@@ -20,15 +20,7 @@ useEffect(() => {
     });
 }, []);
 
-useEffect(() => {
-  fetch('http://127.0.0.1:3001/api/health/db')
-    .then(res => {
-      console.log('Fetch response status:', res.status);
-      return res.json();
-    })
-    .then(data => console.log('Fetch response data:', data))
-    .catch(err => console.error('Fetch error:', err));
-}, []);
+
 
   const handleNavigation = (page, userData) => {
     setCurrentPage(page);

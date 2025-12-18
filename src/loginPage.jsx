@@ -1,36 +1,36 @@
-import { useState } from 'react';
+import { useState } from "react";
 import "./App.css";
 export default function LoginPage({ onNavigate }) {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    name: '',
-    confirmPassword: ''
+    email: "",
+    password: "",
+    name: "",
+    confirmPassword: "",
   });
   const [errors, setErrors] = useState({});
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const newErrors = {};
 
     if (!formData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = "Email is invalid";
     }
 
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = "Password is required";
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = "Password must be at least 6 characters";
     }
 
     if (!isLogin) {
       if (!formData.name) {
-        newErrors.name = 'Name is required';
+        newErrors.name = "Name is required";
       }
       if (formData.password !== formData.confirmPassword) {
-        newErrors.confirmPassword = 'Passwords do not match';
+        newErrors.confirmPassword = "Passwords do not match";
       }
     }
 
@@ -39,31 +39,105 @@ export default function LoginPage({ onNavigate }) {
       return;
     }
 
-    const userData = {
+    // 👉 SIGN UP: store in Neon DB
+    if (!isLogin) {
+      const res = await fetch("/api/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message);
+        return;
+      }
+    }
+
+    // 👉 SIGN UP: store in Neon DB
+    if (isLogin) {
+      const res = await fetch("/api/loginin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message);
+        return;
+      }
+    }
+
+    // Navigate after success
+    onNavigate("dashboard", {
       email: formData.email,
-      name: formData.name || formData.email.split('@')[0]
-    };
-    
-    onNavigate('dashboard', userData);
+      name: formData.name || formData.email.split("@")[0],
+    });
   };
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
     if (errors[e.target.name]) {
       setErrors({
         ...errors,
-        [e.target.name]: ''
+        [e.target.name]: "",
       });
     }
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleSubmit();
     }
+  };
+
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+
+  const handleForgotPassword = async () => {
+    if (!forgotEmail) {
+      alert("Please enter email");
+      return;
+    }
+
+      if (forgotEmail) {
+      const res = await fetch("/api/forgotpassword", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: forgotEmail
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message);
+        return;
+      }
+    }
+    
+
+    console.log("Forgot password email:", forgotEmail);
+
+    // later we will call backend API here
+    // fetch('/api/forgot-password', { ... })
+
+    setShowForgotModal(false);
+    setForgotEmail("");
   };
 
   return (
@@ -89,8 +163,8 @@ export default function LoginPage({ onNavigate }) {
               }}
               className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
                 isLogin
-                  ? 'bg-blue-500 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? "bg-blue-500 text-white shadow-md"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
               Login
@@ -102,8 +176,8 @@ export default function LoginPage({ onNavigate }) {
               }}
               className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
                 !isLogin
-                  ? 'bg-blue-500 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? "bg-blue-500 text-white shadow-md"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
               Sign Up
@@ -118,20 +192,25 @@ export default function LoginPage({ onNavigate }) {
                   Full Name
                 </label>
                 <div className="relative">
-                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                  <div
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    size={20}
+                  />
                   <input
                     type="text"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
                     onKeyPress={handleKeyPress}
-                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                      errors.name ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full pl-2 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                      errors.name ? "border-red-500" : "border-gray-300"
                     }`}
                     placeholder="Enter your name"
                   />
                 </div>
-                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+                {errors.name && (
+                  <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+                )}
               </div>
             )}
 
@@ -140,20 +219,25 @@ export default function LoginPage({ onNavigate }) {
                 Email Address
               </label>
               <div className="relative">
-                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <div
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  size={20}
+                />
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
                   onKeyPress={handleKeyPress}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                    errors.email ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full pl-2 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                    errors.email ? "border-red-500" : "border-gray-300"
                   }`}
                   placeholder="Enter your email"
                 />
               </div>
-              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+              )}
             </div>
 
             <div>
@@ -161,20 +245,25 @@ export default function LoginPage({ onNavigate }) {
                 Password
               </label>
               <div className="relative">
-                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <div
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  size={20}
+                />
                 <input
                   type="password"
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
                   onKeyPress={handleKeyPress}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                    errors.password ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full pl-2 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                    errors.password ? "border-red-500" : "border-gray-300"
                   }`}
                   placeholder="Enter your password"
                 />
               </div>
-              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+              {errors.password && (
+                <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+              )}
             </div>
 
             {!isLogin && (
@@ -183,26 +272,39 @@ export default function LoginPage({ onNavigate }) {
                   Confirm Password
                 </label>
                 <div className="relative">
-                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                  <div
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    size={20}
+                  />
                   <input
                     type="password"
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     onKeyPress={handleKeyPress}
-                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
-                      errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                    className={`w-full pl-2 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all ${
+                      errors.confirmPassword
+                        ? "border-red-500"
+                        : "border-gray-300"
                     }`}
                     placeholder="Confirm your password"
                   />
                 </div>
-                {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
+                {errors.confirmPassword && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.confirmPassword}
+                  </p>
+                )}
               </div>
             )}
 
             {isLogin && (
               <div className="flex justify-end">
-                <button type="button" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                <button
+                  type="button"
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  onClick={() => setShowForgotModal(true)}
+                >
                   Forgot Password?
                 </button>
               </div>
@@ -212,7 +314,7 @@ export default function LoginPage({ onNavigate }) {
               onClick={handleSubmit}
               className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              {isLogin ? 'Login' : 'Sign Up'}
+              {isLogin ? "Login" : "Sign Up"}
             </button>
           </div>
 
@@ -225,11 +327,48 @@ export default function LoginPage({ onNavigate }) {
               }}
               className="text-blue-600 hover:text-blue-700 font-semibold"
             >
-              {isLogin ? 'Sign Up' : 'Login'}
+              {isLogin ? "Sign Up" : "Login"}
             </button>
           </div>
         </div>
       </div>
+
+      {showForgotModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 relative animate-fadeIn">
+            {/* Close */}
+            <button
+              onClick={() => setShowForgotModal(false)}
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 text-xl"
+            >
+              ×
+            </button>
+
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">
+              Forgot Password
+            </h2>
+
+            <p className="text-sm text-gray-500 mb-4">
+              Enter your registered email address
+            </p>
+
+            <input
+              type="email"
+              value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
+              placeholder="Email address"
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+
+            <button
+              onClick={handleForgotPassword}
+              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+            >
+              Send Password
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
