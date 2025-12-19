@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import LoginPage from './loginPage.jsx';
+import DashboardPage from './DashboardPage';
+import { Toaster } from "sonner";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('login');
@@ -30,12 +32,22 @@ useEffect(() => {
 
   return (
     <>
+     <Toaster
+        position="top-right"
+        richColors
+        toastOptions={{
+          className: "rounded-xl shadow-lg text-sm",
+        }}
+      />
       <div style={{ padding: '10px', fontWeight: 'bold' }}>
         Neon DB Status: {dbStatus}
       </div>
 
       {currentPage === 'login' && (
         <LoginPage onNavigate={handleNavigation} />
+      )}
+       {currentPage === 'dashboard' && user && (
+        <DashboardPage user={user} onNavigate={handleNavigation} />
       )}
     </>
   );

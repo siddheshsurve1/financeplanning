@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "./App.css";
+import { toast } from "sonner";
 export default function LoginPage({ onNavigate }) {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
@@ -54,12 +55,17 @@ export default function LoginPage({ onNavigate }) {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.message);
+        toast.warning(data.message);
+        setIsLogin(true); // 👈 shows "Data already present"
         return;
       }
+
+      toast.success("Signup successful! Please login.");
+
+      return;
     }
 
-    // 👉 SIGN UP: store in Neon DB
+    // 👉 LOGiN: store in Neon DB
     if (isLogin) {
       const res = await fetch("/api/loginin", {
         method: "POST",
@@ -72,20 +78,25 @@ export default function LoginPage({ onNavigate }) {
 
       const data = await res.json();
 
+      console.log("LOGIN STATUS:", res.status);
+      console.log("LOGIN OK:", res.ok);
+      console.log("LOGIN RESPONSE:", data);
+      // ❌ Wrong password / email
       if (!res.ok) {
-        alert(data.message);
-        return;
+        toast.error(data.message);
+        return; // ⛔ STOP — NO NAVIGATION
       }
-    }
 
-    // Navigate after success
-    onNavigate("dashboard", {
-      email: formData.email,
-      name: formData.name || formData.email.split("@")[0],
-    });
+      // ✅ Correct login only
+      toast.success("Login successful!");
+
+      onNavigate("dashboard", {
+        email: formData.email,
+        name: data.name,
+      });
+    }
   };
 
-  
   const handleChange = (e) => {
     setFormData({
       ...formData,
@@ -114,12 +125,12 @@ export default function LoginPage({ onNavigate }) {
       return;
     }
 
-      if (forgotEmail) {
+    if (forgotEmail) {
       const res = await fetch("/api/forgotpassword", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: forgotEmail
+          email: forgotEmail,
         }),
       });
 
@@ -128,9 +139,10 @@ export default function LoginPage({ onNavigate }) {
       if (!res.ok) {
         alert(data.message);
         return;
+      } else {
+        toast.success("Password Sent to your register Mail");
       }
     }
-    
 
     console.log("Forgot password email:", forgotEmail);
 
@@ -142,10 +154,15 @@ export default function LoginPage({ onNavigate }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center p-4">
+    <div
+      className="min-h-screen flex items-center justify-center p-4 bg-cover bg-center"
+      style={{
+        backgroundImage: "url('/src/financial-planning.webp')",
+      }}
+    >
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fadeIn">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-8 text-white text-center">
+        <div className="bg-gradient-to-r from-blue-800 p-8 text-white text-center">
           {/* <div className="bg-white/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
             <DollarSign size={40} strokeWidth={2.5} />
           </div> */}
@@ -164,7 +181,7 @@ export default function LoginPage({ onNavigate }) {
               }}
               className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
                 isLogin
-                  ? "bg-blue-500 text-white shadow-md"
+                  ? "bg-blue-800 text-white shadow-md"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
@@ -177,7 +194,7 @@ export default function LoginPage({ onNavigate }) {
               }}
               className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
                 !isLogin
-                  ? "bg-blue-500 text-white shadow-md"
+                  ? "bg-blue-800 text-white shadow-md"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
@@ -313,7 +330,7 @@ export default function LoginPage({ onNavigate }) {
 
             <button
               onClick={handleSubmit}
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="w-full bg-gradient-to-r from-blue-800 text-white py-3 rounded-lg font-semibold hover:from-blue-800 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
             >
               {isLogin ? "Login" : "Sign Up"}
             </button>
