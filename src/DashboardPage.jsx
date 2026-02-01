@@ -66,6 +66,21 @@ const userId = user?.id;
       });
   }, [user]);
 
+     useEffect(() => {
+    if (!user?.id) return;
+
+    fetch(`/api/investments/${user.id}`)
+      .then(res => res.json())
+      .then(data => {
+        setInvestments(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Failed to fetch expenses', err);
+        setLoading(false);
+      });
+  }, [user]);
+
  const currentItems = isExpenseTab ? expenses : investments;
   const safeItems = Array.isArray(currentItems) ? currentItems : [];
 
@@ -201,10 +216,11 @@ const monthlyData = useMemo(() => {
 
 const safeExpenses = Array.isArray(expenses) ? expenses : [];
 
-const totalExpenses = safeExpenses.reduce((sum, e) => sum + e.amount, 0);
+const totalExpenses = safeExpenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+
 
 const safeInvestments = Array.isArray(investments) ? investments : [];
-const totalInvestments = safeInvestments.reduce((sum, i) => sum + i.amount, 0);
+const totalInvestments = safeInvestments.reduce((sum, e) => sum + parseFloat(e.amount), 0);
 
   const netSavings = totalInvestments - totalExpenses;
 

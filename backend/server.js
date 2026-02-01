@@ -286,4 +286,19 @@ app.get('/api/expenses/:userId', async (req, res) => {
   }
 });
 
+app.get('/api/investments/:userId', async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    const result = await query(
+      'SELECT * FROM investments WHERE user_id = $1 ORDER BY date DESC',
+      [userId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching expenses:', err);
+    res.status(500).json({ message: 'DB error' });
+  }
+});
+
 
