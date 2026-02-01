@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, TrendingDown, DollarSign, Plus, Trash2, Calendar, LogOut, User, Mail, Clock, Shield } from 'lucide-react';
-
+import { toast } from "sonner";
 const EXPENSE_CATEGORIES = [
   'Housing', 'Transportation', 'Food', 'Utilities', 'Healthcare',
   'Entertainment', 'Education', 'Insurance', 'Shopping', 'Other'
@@ -16,16 +16,19 @@ const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
                 '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16'];
 
 export default function DashboardPage({ user, onNavigate }) {
+
+
+
+
   const [activeTab, setActiveTab] = useState('expenses');
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [expenses, setExpenses] = useState([
-    { id: 1, name: 'Rent', category: 'Housing', amount: 24000, date: '2024-01-15' },
-    { id: 2, name: 'Groceries', category: 'Food', amount: 6000, date: '2024-02-01' }
-  ]);
-  const [investments, setInvestments] = useState([
-    { id: 1, name: '401k', category: 'Retirement Accounts', amount: 12000, date: '2024-01-01' },
-    { id: 2, name: 'Index Fund', category: 'Stocks', amount: 8000, date: '2024-03-15' }
-  ]);
+const [expenses, setExpenses] = useState([]);
+const [investments, setInvestments] = useState([]);
+
+const [loading, setLoading] = useState(true);
+
+
+ 
   
   const [newItem, setNewItem] = useState({
     name: '', category: '', amount: '', date: new Date().toISOString().split('T')[0]
@@ -41,50 +44,168 @@ export default function DashboardPage({ user, onNavigate }) {
   }, []);
 
   const isExpenseTab = activeTab === 'expenses';
-  const currentItems = isExpenseTab ? expenses : investments;
+
   const setCurrentItems = isExpenseTab ? setExpenses : setInvestments;
   const categories = isExpenseTab ? EXPENSE_CATEGORIES : INVESTMENT_CATEGORIES;
 
-  const handleAdd = () => {
-    if (newItem.name && newItem.category && newItem.amount) {
-      const item = {
-        id: Date.now(),
-        ...newItem,
-        amount: parseFloat(newItem.amount)
-      };
-      setCurrentItems([...currentItems, item]);
-      setNewItem({ name: '', category: '', amount: '', date: new Date().toISOString().split('T')[0] });
+  const storedUser = JSON.parse(localStorage.getItem("user"));
+const userId = user?.id;
+
+    useEffect(() => {
+    if (!user?.id) return;
+
+    fetch(`/api/expenses/${user.id}`)
+      .then(res => res.json())
+      .then(data => {
+        setExpenses(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Failed to fetch expenses', err);
+        setLoading(false);
+      });
+  }, [user]);
+
+ const currentItems = isExpenseTab ? expenses : investments;
+  const safeItems = Array.isArray(currentItems) ? currentItems : [];
+
+const handleAdd = async () => {
+  if (!userId) {
+    toast.error("User not logged in");
+    return;
+  }
+
+  if (newItem.name && newItem.category && newItem.amount) {
+
+    const item = {
+      id: Date.now(),
+      ...newItem,
+      amount: parseFloat(newItem.amount),
+    };
+
+    if (isExpenseTab) {
+      const res = await fetch("/api/addexpense", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: userId,
+          name: newItem.name,
+          category: newItem.category,
+          amount: parseFloat(newItem.amount),
+          date: newItem.date,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.warning(data.message);
+        return;
+      }
+
+      toast.success("Expense added successfully!");
+
+      // ✅ update UI immediately (optional)
+      setCurrentItems(prev => [...prev, item]);
+
+      // ✅ clear form
+      setNewItem({
+        name: '',
+        category: '',
+        amount: '',
+        date: new Date().toISOString().split('T')[0],
+      });
+
+      return;
     }
-  };
 
-  const handleDelete = (id) => {
-    setCurrentItems(currentItems.filter(item => item.id !== id));
-  };
+    if (!isExpenseTab) {
+      const res = await fetch("/api/addinvestment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: userId,
+          name: newItem.name,
+          category: newItem.category,
+          amount: parseFloat(newItem.amount),
+          date: newItem.date,
+        }),
+      });
 
-  const categoryData = useMemo(() => {
-    const grouped = currentItems.reduce((acc, item) => {
-      acc[item.category] = (acc[item.category] || 0) + item.amount;
-      return acc;
-    }, {});
-    return Object.entries(grouped).map(([name, value]) => ({ name, value }));
-  }, [currentItems]);
+      const data = await res.json();
 
-  const totalAmount = useMemo(() => 
-    currentItems.reduce((sum, item) => sum + item.amount, 0),
-    [currentItems]
-  );
+      if (!res.ok) {
+        toast.warning(data.message);
+        return;
+      }
 
-  const monthlyData = useMemo(() => {
-    const months = {};
-    currentItems.forEach(item => {
-      const month = new Date(item.date).toLocaleString('default', { month: 'short' });
-      months[month] = (months[month] || 0) + item.amount;
+      toast.success("Investment added successfully!");
+
+      // ✅ update UI immediately (optional)
+      setCurrentItems(prev => [...prev, item]);
+
+      // ✅ clear form
+      setNewItem({
+        name: '',
+        category: '',
+        amount: '',
+        date: new Date().toISOString().split('T')[0],
+      });
+
+      return;
+    }
+
+    // fallback for non-expense tab
+    setCurrentItems(prev => [...prev, item]);
+    setNewItem({
+      name: '',
+      category: '',
+      amount: '',
+      date: new Date().toISOString().split('T')[0],
     });
-    return Object.entries(months).map(([month, amount]) => ({ month, amount }));
-  }, [currentItems]);
+  }
+};
 
-  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
-  const totalInvestments = investments.reduce((sum, i) => sum + i.amount, 0);
+const handleDelete = (id) => {
+  if (isExpenseTab) {
+    setExpenses(prev => prev.filter(item => item.id !== id));
+  } else {
+    setInvestments(prev => prev.filter(item => item.id !== id));
+  }
+};
+
+
+
+
+const categoryData = useMemo(() => {
+  const grouped = safeItems.reduce((acc, item) => {
+    acc[item.category] = (acc[item.category] || 0) + item.amount;
+    return acc;
+  }, {});
+  return Object.entries(grouped).map(([name, value]) => ({ name, value }));
+}, [safeItems]);
+
+const totalAmount = useMemo(() => 
+  safeItems.reduce((sum, item) => sum + item.amount, 0),
+  [safeItems]
+);
+
+const monthlyData = useMemo(() => {
+  const months = {};
+  safeItems.forEach(item => {
+    const month = new Date(item.date).toLocaleString('default', { month: 'short' });
+    months[month] = (months[month] || 0) + item.amount;
+  });
+  return Object.entries(months).map(([month, amount]) => ({ month, amount }));
+}, [safeItems]);
+
+const safeExpenses = Array.isArray(expenses) ? expenses : [];
+
+const totalExpenses = safeExpenses.reduce((sum, e) => sum + e.amount, 0);
+
+const safeInvestments = Array.isArray(investments) ? investments : [];
+const totalInvestments = safeInvestments.reduce((sum, i) => sum + i.amount, 0);
+
   const netSavings = totalInvestments - totalExpenses;
 
   // Format date and time
@@ -335,7 +456,7 @@ export default function DashboardPage({ user, onNavigate }) {
               All {isExpenseTab ? 'Expenses' : 'Investments'} (Total: ₹{totalAmount.toLocaleString()})
             </h3>
             <div className="space-y-2 max-h-96 overflow-y-auto">
-              {currentItems.map((item) => (
+              {safeItems.map((item) => (
                 <div key={item.id} className="flex items-center justify-between bg-slate-50 p-4 rounded-lg hover:bg-slate-100 transition-colors">
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
