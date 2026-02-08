@@ -12,8 +12,8 @@ const INVESTMENT_CATEGORIES = [
   'Cryptocurrency', 'Savings', 'Other'
 ];
 
-const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', 
-                '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16'];
+const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
+  '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16'];
 
 export default function DashboardPage({ user, onNavigate }) {
 
@@ -22,14 +22,14 @@ export default function DashboardPage({ user, onNavigate }) {
 
   const [activeTab, setActiveTab] = useState('expenses');
   const [currentTime, setCurrentTime] = useState(new Date());
-const [expenses, setExpenses] = useState([]);
-const [investments, setInvestments] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const [investments, setInvestments] = useState([]);
 
-const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
 
- 
-  
+
+
   const [newItem, setNewItem] = useState({
     name: '', category: '', amount: '', date: new Date().toISOString().split('T')[0]
   });
@@ -49,9 +49,9 @@ const [loading, setLoading] = useState(true);
   const categories = isExpenseTab ? EXPENSE_CATEGORIES : INVESTMENT_CATEGORIES;
 
   const storedUser = JSON.parse(localStorage.getItem("user"));
-const userId = user?.id;
+  const userId = user?.id;
 
-    useEffect(() => {
+  useEffect(() => {
     if (!user?.id) return;
 
     fetch(`/api/expenses/${user.id}`)
@@ -66,7 +66,7 @@ const userId = user?.id;
       });
   }, [user]);
 
-     useEffect(() => {
+  useEffect(() => {
     if (!user?.id) return;
 
     fetch(`/api/investments/${user.id}`)
@@ -81,164 +81,201 @@ const userId = user?.id;
       });
   }, [user]);
 
- const currentItems = isExpenseTab ? expenses : investments;
+  const currentItems = isExpenseTab ? expenses : investments;
   const safeItems = Array.isArray(currentItems) ? currentItems : [];
 
-const handleAdd = async () => {
-  if (!userId) {
-    toast.error("User not logged in");
-    return;
-  }
+  const handleAdd = async () => {
+    if (!userId) {
+      toast.error("User not logged in");
+      return;
+    }
 
-  if (newItem.name && newItem.category && newItem.amount) {
+    if (newItem.name && newItem.category && newItem.amount) {
 
-    const item = {
-      id: Date.now(),
-      ...newItem,
-      amount: parseFloat(newItem.amount),
-    };
+      const item = {
+        id: Date.now(),
+        ...newItem,
+        amount: parseFloat(newItem.amount),
+      };
 
-    if (isExpenseTab) {
-      const res = await fetch("/api/addexpense", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: userId,
-          name: newItem.name,
-          category: newItem.category,
-          amount: parseFloat(newItem.amount),
-          date: newItem.date,
-        }),
-      });
+      if (isExpenseTab) {
+        const res = await fetch("/api/addexpense", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: userId,
+            name: newItem.name,
+            category: newItem.category,
+            amount: parseFloat(newItem.amount),
+            date: newItem.date,
+          }),
+        });
 
-      const data = await res.json();
+        const data = await res.json();
 
-      if (!res.ok) {
-        toast.warning(data.message);
+        if (!res.ok) {
+          toast.warning(data.message);
+          return;
+        }
+
+        toast.success("Expense added successfully!");
+
+        // ✅ update UI immediately (optional)
+        setCurrentItems(prev => [...prev, item]);
+
+        // ✅ clear form
+        setNewItem({
+          name: '',
+          category: '',
+          amount: '',
+          date: new Date().toISOString().split('T')[0],
+        });
+
         return;
       }
 
-      toast.success("Expense added successfully!");
+      if (!isExpenseTab) {
+        const res = await fetch("/api/addinvestment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: userId,
+            name: newItem.name,
+            category: newItem.category,
+            amount: parseFloat(newItem.amount),
+            date: newItem.date,
+          }),
+        });
 
-      // ✅ update UI immediately (optional)
+        const data = await res.json();
+
+        if (!res.ok) {
+          toast.warning(data.message);
+          return;
+        }
+
+        toast.success("Investment added successfully!");
+
+        // ✅ update UI immediately (optional)
+        setCurrentItems(prev => [...prev, item]);
+
+        // ✅ clear form
+        setNewItem({
+          name: '',
+          category: '',
+          amount: '',
+          date: new Date().toISOString().split('T')[0],
+        });
+
+        return;
+      }
+
+      // fallback for non-expense tab
       setCurrentItems(prev => [...prev, item]);
-
-      // ✅ clear form
       setNewItem({
         name: '',
         category: '',
         amount: '',
         date: new Date().toISOString().split('T')[0],
       });
+    }
+  };
 
+  const handleDelete = async(id) => {
+    if (!userId) {
+      toast.error("User not logged in");
       return;
     }
-
     if (!isExpenseTab) {
-      const res = await fetch("/api/addinvestment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: userId,
-          name: newItem.name,
-          category: newItem.category,
-          amount: parseFloat(newItem.amount),
-          date: newItem.date,
-        }),
-      });
+        const res = await fetch("/api/deleteinvestment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+           id:id
+          }),
+        });
 
-      const data = await res.json();
+        const data = await res.json();
 
-      if (!res.ok) {
-        toast.warning(data.message);
-        return;
-      }
+        if (!res.ok) {
+          toast.warning(data.message);
+          return;
+        }
 
-      toast.success("Investment added successfully!");
+        toast.success("Investment Delete successfully!");
+          setInvestments(prev => prev.filter(item => item.id !== id));
+      
+    } else {
+        const res = await fetch("/api/deleteexpenses", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+           id:id
+          }),
+        });
 
-      // ✅ update UI immediately (optional)
-      setCurrentItems(prev => [...prev, item]);
+        const data = await res.json();
 
-      // ✅ clear form
-      setNewItem({
-        name: '',
-        category: '',
-        amount: '',
-        date: new Date().toISOString().split('T')[0],
-      });
+        if (!res.ok) {
+          toast.warning(data.message);
+          return;
+        }
 
-      return;
-    }
-
-    // fallback for non-expense tab
-    setCurrentItems(prev => [...prev, item]);
-    setNewItem({
-      name: '',
-      category: '',
-      amount: '',
-      date: new Date().toISOString().split('T')[0],
-    });
-  }
-};
-
-const handleDelete = (id) => {
-  if (isExpenseTab) {
+        toast.success("Investment Delete successfully!");
     setExpenses(prev => prev.filter(item => item.id !== id));
-  } else {
-    setInvestments(prev => prev.filter(item => item.id !== id));
-  }
-};
+    }
+  };
 
 
 
 
-const categoryData = useMemo(() => {
-  const grouped = safeItems.reduce((acc, item) => {
-    acc[item.category] = (acc[item.category] || 0) + item.amount;
-    return acc;
-  }, {});
-  return Object.entries(grouped).map(([name, value]) => ({ name, value }));
-}, [safeItems]);
+  const categoryData = useMemo(() => {
+    const grouped = safeItems.reduce((acc, item) => {
+      acc[item.category] = (acc[item.category] || 0) + parseFloat(item.amount);
+      return acc;
+    }, {});
+    return Object.entries(grouped).map(([name, value]) => ({ name, value }));
+  }, [safeItems]);
 
-const totalAmount = useMemo(() => 
-  safeItems.reduce((sum, item) => sum + item.amount, 0),
-  [safeItems]
-);
+  const totalAmount = useMemo(() =>
+    safeItems.reduce((sum, item) => sum + parseFloat(item.amount), 0),
+    [safeItems]
+  );
 
-const monthlyData = useMemo(() => {
-  const months = {};
-  safeItems.forEach(item => {
-    const month = new Date(item.date).toLocaleString('default', { month: 'short' });
-    months[month] = (months[month] || 0) + item.amount;
-  });
-  return Object.entries(months).map(([month, amount]) => ({ month, amount }));
-}, [safeItems]);
+  const monthlyData = useMemo(() => {
+    const months = {};
+    safeItems.forEach(item => {
+      const month = new Date(item.date).toLocaleString('default', { month: 'short' });
+      months[month] = (months[month] || 0) + parseFloat(item.amount);
+    });
+    return Object.entries(months).map(([month, amount]) => ({ month, amount }));
+  }, [safeItems]);
 
-const safeExpenses = Array.isArray(expenses) ? expenses : [];
+  const safeExpenses = Array.isArray(expenses) ? expenses : [];
 
-const totalExpenses = safeExpenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+  const totalExpenses = safeExpenses.reduce((sum, e) => sum + parseFloat(e.amount), 0);
 
 
-const safeInvestments = Array.isArray(investments) ? investments : [];
-const totalInvestments = safeInvestments.reduce((sum, e) => sum + parseFloat(e.amount), 0);
+  const safeInvestments = Array.isArray(investments) ? investments : [];
+  const totalInvestments = safeInvestments.reduce((sum, e) => sum + parseFloat(e.amount), 0);
 
   const netSavings = totalInvestments - totalExpenses;
 
   // Format date and time
   const formatDate = (date) => {
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
   };
 
   const formatTime = (date) => {
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
       minute: '2-digit',
-      hour12: true 
+      hour12: true
     });
   };
 
@@ -333,7 +370,7 @@ const totalInvestments = safeInvestments.reduce((sum, e) => sum + parseFloat(e.a
             <p className="text-3xl font-bold text-red-500">₹{totalExpenses.toLocaleString()}</p>
             <p className="text-xs text-slate-500 mt-2">{expenses.length} transactions</p>
           </div>
-          
+
           <div className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-2">
               <span className="text-slate-600 font-medium">Total Investments</span>
@@ -342,7 +379,7 @@ const totalInvestments = safeInvestments.reduce((sum, e) => sum + parseFloat(e.a
             <p className="text-3xl font-bold text-green-500">₹{totalInvestments.toLocaleString()}</p>
             <p className="text-xs text-slate-500 mt-2">{investments.length} investments</p>
           </div>
-          
+
           <div className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-2">
               <span className="text-slate-600 font-medium">Net Position</span>
@@ -363,21 +400,19 @@ const totalInvestments = safeInvestments.reduce((sum, e) => sum + parseFloat(e.a
           <div className="flex gap-2 mb-6 border-b">
             <button
               onClick={() => setActiveTab('expenses')}
-              className={`px-6 py-3 font-medium transition-colors ${
-                activeTab === 'expenses'
+              className={`px-6 py-3 font-medium transition-colors ${activeTab === 'expenses'
                   ? 'border-b-2 border-blue-500 text-blue-600'
                   : 'text-slate-600 hover:text-slate-800'
-              }`}
+                }`}
             >
               Expenses
             </button>
             <button
               onClick={() => setActiveTab('investments')}
-              className={`px-6 py-3 font-medium transition-colors ${
-                activeTab === 'investments'
+              className={`px-6 py-3 font-medium transition-colors ${activeTab === 'investments'
                   ? 'border-b-2 border-blue-500 text-blue-600'
                   : 'text-slate-600 hover:text-slate-800'
-              }`}
+                }`}
             >
               Investments
             </button>
@@ -391,12 +426,12 @@ const totalInvestments = safeInvestments.reduce((sum, e) => sum + parseFloat(e.a
                 type="text"
                 placeholder="Name"
                 value={newItem.name}
-                onChange={(e) => setNewItem({...newItem, name: e.target.value})}
+                onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
                 className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <select
                 value={newItem.category}
-                onChange={(e) => setNewItem({...newItem, category: e.target.value})}
+                onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
                 className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select Category</option>
@@ -408,13 +443,13 @@ const totalInvestments = safeInvestments.reduce((sum, e) => sum + parseFloat(e.a
                 type="number"
                 placeholder="Amount (₹)"
                 value={newItem.amount}
-                onChange={(e) => setNewItem({...newItem, amount: e.target.value})}
+                onChange={(e) => setNewItem({ ...newItem, amount: e.target.value })}
                 className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <input
                 type="date"
                 value={newItem.date}
-                onChange={(e) => setNewItem({...newItem, date: e.target.value})}
+                onChange={(e) => setNewItem({ ...newItem, date: e.target.value })}
                 className="px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <button

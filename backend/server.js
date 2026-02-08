@@ -83,7 +83,7 @@ app.post('/api/loginin', async (req, res) => {
       'SELECT id, name,email, password FROM users_login WHERE email = $1',
       [email]
     );
-
+console.log(result); // full object
     // ❌ Email not found
     if (result.rows.length === 0) {
       return res.status(404).json({
@@ -240,7 +240,7 @@ app.post("/api/addexpense", async (req, res) => {
 
 
 /* =======================
-   expense API ✅
+   investment API ✅
 ======================= */
 app.post("/api/addinvestment", async (req, res) => {
   console.log("STEP 0");
@@ -276,7 +276,7 @@ app.get('/api/expenses/:userId', async (req, res) => {
 
   try {
     const result = await query(
-      'SELECT * FROM expenses WHERE user_id = $1 ORDER BY date DESC',
+      'SELECT * FROM expenses WHERE user_id = $1 and delete_status=1  ORDER BY date DESC',
       [userId]
     );
     res.json(result.rows);
@@ -291,7 +291,7 @@ app.get('/api/investments/:userId', async (req, res) => {
 
   try {
     const result = await query(
-      'SELECT * FROM investments WHERE user_id = $1 ORDER BY date DESC',
+      'SELECT * FROM investments WHERE user_id = $1 and delete_status=1 ORDER BY date DESC',
       [userId]
     );
     res.json(result.rows);
@@ -301,4 +301,63 @@ app.get('/api/investments/:userId', async (req, res) => {
   }
 });
 
+/* =======================
+   delete investment API ✅
+======================= */
+app.post("/api/deleteinvestment", async (req, res) => {
+  console.log("STEP 0");
 
+  try {
+    const { id } = req.body;
+
+    console.log("STEP 1", id);
+
+    if (!id) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    await query(
+      `UPDATE investments set delete_status='2' where id=$1`,
+      [id]
+    );
+
+    console.log("STEP 2: Investment deleted");
+
+    res.json({ success: true, message: "Investment Deleted successfully" });
+
+  } catch (err) {
+    console.error("check 👉", err);
+    res.status(500).json({ message: "DB error" });
+  }
+});
+
+
+/* =======================
+   delete expenses API ✅
+======================= */
+app.post("/api/deleteexpenses", async (req, res) => {
+  console.log("STEP 0");
+
+  try {
+    const { id } = req.body;
+
+    console.log("STEP 1", id);
+
+    if (!id) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    await query(
+      `UPDATE expenses set delete_status='2' where id=$1`,
+      [id]
+    );
+
+    console.log("STEP 2: Investment deleted");
+
+    res.json({ success: true, message: "Expenses Deleted successfully" });
+
+  } catch (err) {
+    console.error("check 👉", err);
+    res.status(500).json({ message: "DB error" });
+  }
+});
