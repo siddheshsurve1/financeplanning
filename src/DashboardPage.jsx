@@ -103,7 +103,7 @@ export default function DashboardPage({ user, onNavigate }) {
       .then((res) => res.json())
       .then((data) => {
         setgetfinance(data);
-        setLoading(false);
+        setLoading(true);
       })
       .catch((err) => {
         console.error("Failed to fetch financial", err);
@@ -128,8 +128,9 @@ useEffect(() => {
   fetch(`/api/expenses/${user.id}/${selectedCat}`)
     .then(res => res.json())
     .then(data => {
+      setLoading(true);
       setExpenses(data);
-      setLoading(false);
+       setLoading(false);
     })
     .catch(err => {
       console.error("Failed to fetch expenses", err);
@@ -182,6 +183,7 @@ useEffect(() => {
             category: newItem.category,
             amount: parseFloat(newItem.amount),
             date: newItem.date,
+            financeid: selectedCat,
           }),
         });
 
@@ -202,6 +204,8 @@ useEffect(() => {
           name: "",
           category: "",
           amount: "",
+           sipDay: "",
+            monthly: "",
           date: new Date().toISOString().split("T")[0],
         });
 
@@ -218,6 +222,9 @@ useEffect(() => {
             category: newItem.category,
             amount: parseFloat(newItem.amount),
             date: newItem.date,
+            sipDay:newItem.sipDay,
+            monthly:newItem.monthly,
+              financeid: selectedCat,
           }),
         });
 
@@ -361,6 +368,11 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
+  {loading && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70">
+    <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600" />
+  </div>
+)}
       <div className="max-w-7xl mx-auto">
         {/* Staff Login Details Bar */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-lg p-6 mb-6 text-white">
@@ -532,14 +544,16 @@ useEffect(() => {
             >
               Investments
             </button>
-          </div>
 
-          <button
+               <button
             onClick={() => setShowModal(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+           className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 ml-auto mb-4"
           >
             + Add {isExpenseTab ? "Expense" : "Investment"}
           </button>
+          </div>
+
+       
 
           {/* Add New Item Form */}
           {showModal && (

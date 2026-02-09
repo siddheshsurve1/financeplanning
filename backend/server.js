@@ -213,18 +213,18 @@ app.post("/api/addexpense", async (req, res) => {
   console.log("STEP 0");
 
   try {
-    const { user_id, name, category, amount, date } = req.body;
+    const { user_id, name, category, amount, date,financeid } = req.body;
 
     console.log("STEP 1", user_id, name, amount);
 
-    if (!user_id || !name || !category || !amount || !date) {
+    if (!user_id || !name || !category || !amount || !date || !financeid) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
     await query(
-      `INSERT INTO expenses (user_id, name, category, amount, date)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [user_id, name, category, amount, date]
+      `INSERT INTO expenses (user_id, name, category, amount, date,financialyear_id)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [user_id, name, category, amount, date,financeid]
     );
 
     console.log("STEP 2: Expense inserted");
@@ -246,18 +246,18 @@ app.post("/api/addinvestment", async (req, res) => {
   console.log("STEP 0");
 
   try {
-    const { user_id, name, category, amount, date } = req.body;
+    const { user_id, name, category, amount, date,sipDay,monthly,financeid } = req.body;
 
-    console.log("STEP 1", user_id, name, amount);
+    console.log("STEP 1", user_id, name, amount,sipDay,monthly,financeid);
 
-    if (!user_id || !name || !category || !amount || !date) {
+    if (!user_id || !name || !category || !amount || !date || !financeid) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
     await query(
-      `INSERT INTO investments (user_id, name, category, amount,monthly,date)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [user_id, name, category, amount, amount, date]
+      `INSERT INTO investments (user_id, name, category, amount,monthly,sipday,date,financialyear_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [user_id, name, category, amount, monthly,sipDay, date,financeid]
     );
 
     console.log("STEP 2: Investment inserted");
