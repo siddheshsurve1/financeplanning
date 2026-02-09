@@ -255,9 +255,9 @@ app.post("/api/addinvestment", async (req, res) => {
     }
 
     await query(
-      `INSERT INTO investments (user_id, name, category, amount, date)
+      `INSERT INTO investments (user_id, name, category, amount,monthly,date)
        VALUES ($1, $2, $3, $4, $5)`,
-      [user_id, name, category, amount, date]
+      [user_id, name, category, amount, amount, date]
     );
 
     console.log("STEP 2: Investment inserted");
@@ -271,13 +271,13 @@ app.post("/api/addinvestment", async (req, res) => {
 });
 
 
-app.get('/api/expenses/:userId', async (req, res) => {
+app.get('/api/expenses/:userId/:financeId', async (req, res) => {
   const userId = req.params.userId;
-
+const financeId = req.params.financeId;
   try {
     const result = await query(
-      'SELECT * FROM expenses WHERE user_id = $1 and delete_status=1  ORDER BY date DESC',
-      [userId]
+      'SELECT * FROM expenses WHERE user_id = $1 and delete_status=1  and financialyear_id=$2 ORDER BY date DESC',
+      [userId,financeId]
     );
     res.json(result.rows);
   } catch (err) {
@@ -286,13 +286,30 @@ app.get('/api/expenses/:userId', async (req, res) => {
   }
 });
 
-app.get('/api/investments/:userId', async (req, res) => {
+app.get('/api/investments/:userId/:financeId', async (req, res) => {
   const userId = req.params.userId;
+  const financeId = req.params.financeId;
 
   try {
     const result = await query(
-      'SELECT * FROM investments WHERE user_id = $1 and delete_status=1 ORDER BY date DESC',
-      [userId]
+      'SELECT * FROM investments WHERE user_id = $1 and delete_status=1 and financialyear_id=$2 ORDER BY date DESC',
+      [userId,financeId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching expenses:', err);
+    res.status(500).json({ message: 'DB error' });
+  }
+});
+
+
+
+app.get('/api/financialyear', async (req, res) => {
+
+
+  try {
+    const result = await query(
+      'SELECT * FROM financial_year ORDER BY start_date DESC'
     );
     res.json(result.rows);
   } catch (err) {
