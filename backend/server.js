@@ -80,10 +80,10 @@ app.post('/api/loginin', async (req, res) => {
     const { email, password } = req.body;
 
     const result = await query(
-      'SELECT id, name, password FROM users_login WHERE email = $1',
+      'SELECT id, name,email, password FROM users_login WHERE email = $1',
       [email]
     );
-
+console.log(result); // full object
     // ❌ Email not found
     if (result.rows.length === 0) {
       return res.status(404).json({
@@ -106,7 +106,9 @@ app.post('/api/loginin', async (req, res) => {
     // ✅ Correct login
     return res.status(200).json({
       success: true,
-      name: user.name
+      name: user.name,
+      id: user.id,
+      email: user.email
     });
 
   } catch (err) {
@@ -200,4 +202,162 @@ app.post("/api/forgotpassword", async (req, res) => {
 const PORT = 3001;
 app.listen(PORT, () => {
   console.log(`🚀 Backend running on port ${PORT}`);
+});
+
+
+
+/* =======================
+   expense API ✅
+======================= */
+app.post("/api/addexpense", async (req, res) => {
+  console.log("STEP 0");
+
+  try {
+    const { user_id, name, category, amount, date } = req.body;
+
+    console.log("STEP 1", user_id, name, amount);
+
+    if (!user_id || !name || !category || !amount || !date) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    await query(
+      `INSERT INTO expenses (user_id, name, category, amount, date)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [user_id, name, category, amount, date]
+    );
+
+    console.log("STEP 2: Expense inserted");
+
+    res.json({ success: true, message: "Expense added successfully" });
+
+  } catch (err) {
+    console.error("check 👉", err);
+    res.status(500).json({ message: "DB error" });
+  }
+});
+
+
+
+/* =======================
+   investment API ✅
+======================= */
+app.post("/api/addinvestment", async (req, res) => {
+  console.log("STEP 0");
+
+  try {
+    const { user_id, name, category, amount, date } = req.body;
+
+    console.log("STEP 1", user_id, name, amount);
+
+    if (!user_id || !name || !category || !amount || !date) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    await query(
+      `INSERT INTO investments (user_id, name, category, amount, date)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [user_id, name, category, amount, date]
+    );
+
+    console.log("STEP 2: Investment inserted");
+
+    res.json({ success: true, message: "Investment added successfully" });
+
+  } catch (err) {
+    console.error("check 👉", err);
+    res.status(500).json({ message: "DB error" });
+  }
+});
+
+
+app.get('/api/expenses/:userId', async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    const result = await query(
+      'SELECT * FROM expenses WHERE user_id = $1 and delete_status=1  ORDER BY date DESC',
+      [userId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching expenses:', err);
+    res.status(500).json({ message: 'DB error' });
+  }
+});
+
+app.get('/api/investments/:userId', async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    const result = await query(
+      'SELECT * FROM investments WHERE user_id = $1 and delete_status=1 ORDER BY date DESC',
+      [userId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching expenses:', err);
+    res.status(500).json({ message: 'DB error' });
+  }
+});
+
+/* =======================
+   delete investment API ✅
+======================= */
+app.post("/api/deleteinvestment", async (req, res) => {
+  console.log("STEP 0");
+
+  try {
+    const { id } = req.body;
+
+    console.log("STEP 1", id);
+
+    if (!id) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    await query(
+      `UPDATE investments set delete_status='2' where id=$1`,
+      [id]
+    );
+
+    console.log("STEP 2: Investment deleted");
+
+    res.json({ success: true, message: "Investment Deleted successfully" });
+
+  } catch (err) {
+    console.error("check 👉", err);
+    res.status(500).json({ message: "DB error" });
+  }
+});
+
+
+/* =======================
+   delete expenses API ✅
+======================= */
+app.post("/api/deleteexpenses", async (req, res) => {
+  console.log("STEP 0");
+
+  try {
+    const { id } = req.body;
+
+    console.log("STEP 1", id);
+
+    if (!id) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    await query(
+      `UPDATE expenses set delete_status='2' where id=$1`,
+      [id]
+    );
+
+    console.log("STEP 2: Investment deleted");
+
+    res.json({ success: true, message: "Expenses Deleted successfully" });
+
+  } catch (err) {
+    console.error("check 👉", err);
+    res.status(500).json({ message: "DB error" });
+  }
 });

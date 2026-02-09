@@ -89,11 +89,27 @@ export default function LoginPage({ onNavigate }) {
 
       // ✅ Correct login only
       toast.success("Login successful!");
+      // after successful login
+localStorage.setItem(
+  "user",
+  JSON.stringify({
+    id: data.id,
+    name: data.name,
+    email: data.email,
+  })
+);
 
-      onNavigate("dashboard", {
-        email: formData.email,
-        name: data.name,
-      });
+// ✅ Optional: store token if backend sends it
+if (data.token) {
+  localStorage.setItem("authToken", data.token);
+}
+
+// ✅ Navigate to dashboard
+onNavigate("dashboard", {
+  id: data.id,
+  name: data.name,
+  email: data.email,
+});
     }
   };
 
