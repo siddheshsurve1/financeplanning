@@ -49,6 +49,12 @@ const INVESTMENT_CATEGORIES = [
   "Other",
 ];
 
+const INCOME_CATEGORIES = [
+ "Salary",
+ "Business",
+ "Freelance",
+];
+
 const COLORS = [
   "#3b82f6",
   "#ef4444",
@@ -65,10 +71,11 @@ const COLORS = [
 export default function DashboardPage({ user, onNavigate }) {
   const [showModal, setShowModal] = useState(false);
 
-  const [activeTab, setActiveTab] = useState("expenses");
+  const [activeTab, setActiveTab] = useState("income");
   const [currentTime, setCurrentTime] = useState(new Date());
   const [expenses, setExpenses] = useState([]);
   const [investments, setInvestments] = useState([]);
+  const [income, setIncome] = useState([]);
   const [getfinance, setgetfinance] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -88,13 +95,22 @@ export default function DashboardPage({ user, onNavigate }) {
     return () => clearInterval(timer);
   }, []);
 
-  const isExpenseTab = activeTab === "expenses";
+const isExpenseTab = activeTab === "expenses";
+const isInvestmentTab = activeTab === "investments";
+const isIncomeTab = activeTab === "income";
 
-  const setCurrentItems = isExpenseTab ? setExpenses : setInvestments;
-  const categories = isExpenseTab ? EXPENSE_CATEGORIES : INVESTMENT_CATEGORIES;
+ const setCurrentItems = isExpenseTab
+  ? setExpenses
+  : isInvestmentTab
+  ? setInvestments
+  : setIncome;   // new income state setter
+
+  const categories = isExpenseTab ? EXPENSE_CATEGORIES : isInvestmentTab ? INVESTMENT_CATEGORIES : INCOME_CATEGORIES;
 
   const storedUser = JSON.parse(localStorage.getItem("user"));
   const userId = user?.id;
+
+
 
   useEffect(() => {
     if (!user?.id) return;
@@ -113,51 +129,66 @@ export default function DashboardPage({ user, onNavigate }) {
 
   const [selectedCat, setSelectedCat] = useState("");
 
-useEffect(() => {
-  if (getfinance.length > 0) {
-    const defaultCat = getfinance.find(cat => cat.default_select == 1);
-    if (defaultCat) {
-      setSelectedCat(defaultCat.id);
+  useEffect(() => {
+    if (getfinance.length > 0) {
+      const defaultCat = getfinance.find(cat => cat.default_select == 1);
+      if (defaultCat) {
+        setSelectedCat(defaultCat.id);
+      }
     }
-  }
-}, [getfinance]);
+  }, [getfinance]);
 
-useEffect(() => {
-  if (!user?.id || !selectedCat) return;
+  useEffect(() => {
+    if (!user?.id || !selectedCat) return;
 
-  fetch(`/api/expenses/${user.id}/${selectedCat}`)
-    .then(res => res.json())
-    .then(data => {
-      setLoading(true);
-      setExpenses(data);
-       setLoading(false);
-    })
-    .catch(err => {
-      console.error("Failed to fetch expenses", err);
-      setLoading(false);
-    });
-}, [user?.id, selectedCat]);
+    fetch(`/api/expenses/${user.id}/${selectedCat}`)
+      .then(res => res.json())
+      .then(data => {
+        setLoading(true);
+        setExpenses(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch expenses", err);
+        setLoading(false);
+      });
+  }, [user?.id, selectedCat]);
 
-useEffect(() => {
-  if (!user?.id || !selectedCat) return;
+  useEffect(() => {
+    if (!user?.id || !selectedCat) return;
 
-  fetch(`/api/investments/${user.id}/${selectedCat}`)
-    .then(res => res.json())
-    .then(data => {
-      setInvestments(data);
-      setLoading(false);
-    })
-    .catch(err => {
-      console.error("Failed to fetch investments", err);
-      setLoading(false);
-    });
-}, [user?.id, selectedCat]);
+    fetch(`/api/investments/${user.id}/${selectedCat}`)
+      .then(res => res.json())
+      .then(data => {
+        setInvestments(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch investments", err);
+        setLoading(false);
+      });
+  }, [user?.id, selectedCat]);
+
+    useEffect(() => {
+    if (!user?.id|| !selectedCat) return;
+
+    fetch(`/api/income/${user.id}/${selectedCat}`)
+      .then(res => res.json())
+      .then(data => {
+        setIncome(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch income", err);
+        setLoading(false);
+      });
+  }, [user,selectedCat]);
 
 
 
- 
 
-  const currentItems = isExpenseTab ? expenses : investments;
+
+  const currentItems = isExpenseTab ? expenses : isInvestmentTab ? investments : income;
   const safeItems = Array.isArray(currentItems) ? currentItems : [];
 
   const handleAdd = async () => {
@@ -204,15 +235,15 @@ useEffect(() => {
           name: "",
           category: "",
           amount: "",
-           sipDay: "",
-            monthly: "",
+          sipDay: "",
+          monthly: "",
           date: new Date().toISOString().split("T")[0],
         });
 
         return;
       }
 
-      if (!isExpenseTab) {
+      if (isInvestmentTab) {
         const res = await fetch("/api/addinvestment", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -222,9 +253,9 @@ useEffect(() => {
             category: newItem.category,
             amount: parseFloat(newItem.amount),
             date: newItem.date,
-            sipDay:newItem.sipDay,
-            monthly:newItem.monthly,
-              financeid: selectedCat,
+            sipDay: newItem.sipDay,
+            monthly: newItem.monthly,
+            financeid: selectedCat,
           }),
         });
 
@@ -368,11 +399,11 @@ useEffect(() => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
-  {loading && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70">
-    <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600" />
-  </div>
-)}
+      {loading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-300 border-t-blue-600" />
+        </div>
+      )}
       <div className="max-w-7xl mx-auto">
         {/* Staff Login Details Bar */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-lg p-6 mb-6 text-white">
@@ -428,9 +459,9 @@ useEffect(() => {
               </div>
             </div>
             <select className="flex items-center gap-2 px-6 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg transition-all shadow-md hover:shadow-lg border border-white/30"
-             value={selectedCat}
-  onChange={(e) => setSelectedCat(e.target.value)}
-  >
+              value={selectedCat}
+              onChange={(e) => setSelectedCat(e.target.value)}
+            >
               {getfinance.map((cat) => (
                 <option key={cat.id} value={cat.id} className="text-gray-400">
                   {cat.financial_name}
@@ -524,36 +555,43 @@ useEffect(() => {
         <div className="bg-white rounded-2xl shadow-lg p-6">
           {/* Tabs */}
           <div className="flex gap-2 mb-6 border-b">
-            <button
-              onClick={() => setActiveTab("expenses")}
-              className={`px-6 py-3 font-medium transition-colors ${
-                activeTab === "expenses"
+             <button
+              onClick={() => setActiveTab("income")}
+              className={`px-6 py-3 font-medium transition-colors ${activeTab === "income"
                   ? "border-b-2 border-blue-500 text-blue-600"
                   : "text-slate-600 hover:text-slate-800"
-              }`}
+                }`}
+            >
+              Income
+            </button>
+            <button
+              onClick={() => setActiveTab("expenses")}
+              className={`px-6 py-3 font-medium transition-colors ${activeTab === "expenses"
+                  ? "border-b-2 border-blue-500 text-blue-600"
+                  : "text-slate-600 hover:text-slate-800"
+                }`}
             >
               Expenses
             </button>
             <button
               onClick={() => setActiveTab("investments")}
-              className={`px-6 py-3 font-medium transition-colors ${
-                activeTab === "investments"
+              className={`px-6 py-3 font-medium transition-colors ${activeTab === "investments"
                   ? "border-b-2 border-blue-500 text-blue-600"
                   : "text-slate-600 hover:text-slate-800"
-              }`}
+                }`}
             >
               Investments
             </button>
 
-               <button
-            onClick={() => setShowModal(true)}
-           className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 ml-auto mb-4"
-          >
-            + Add {isExpenseTab ? "Expense" : "Investment"}
-          </button>
+            <button
+              onClick={() => setShowModal(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 ml-auto mb-4"
+            >
+              + Add {isExpenseTab ? "Expense" :isInvestmentTab ? "Investment" : "Income"}
+            </button>
           </div>
 
-       
+
 
           {/* Add New Item Form */}
           {showModal && (
@@ -561,7 +599,7 @@ useEffect(() => {
               <div className="bg-white rounded-xl w-full max-w-2xl p-6 shadow-lg animate-fadeIn">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold">
-                    Add New {isExpenseTab ? "Expense" : "Investment"}
+                    Add New {isExpenseTab ? "Expense" :isInvestmentTab ? "Investment" : "Income"}
                   </h3>
                   <button
                     onClick={() => setShowModal(false)}

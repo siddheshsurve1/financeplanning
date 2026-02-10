@@ -302,6 +302,21 @@ app.get('/api/investments/:userId/:financeId', async (req, res) => {
   }
 });
 
+app.get('/api/income/:userId/:financeId', async (req, res) => {
+  const userId = req.params.userId;
+const financeId = req.params.financeId;
+  try {
+    const result = await query(
+      'SELECT * FROM income_data WHERE user_id = $1 and delete_status=1  and financialyear_id=$2 ORDER BY date DESC',
+      [userId,financeId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching income:', err);
+    res.status(500).json({ message: 'DB error' });
+  }
+});
+
 
 
 app.get('/api/financialyear', async (req, res) => {
