@@ -53,6 +53,27 @@ const INCOME_CATEGORIES = [
  "Salary",
  "Business",
  "Freelance",
+ "Dividends",
+ "Interest",
+ "Rental Income",
+ "Capital Gains",
+ "Other",
+];
+
+const MONTHS = [
+   { id: 0, name: "All Months" },
+  { id: 1, name: "January" },
+  { id: 2, name: "February" },
+  { id: 3, name: "March" },
+  { id: 4, name: "April" },
+  { id: 5, name: "May" },
+  { id: 6, name: "June" },
+  { id: 7, name: "July" },
+  { id: 8, name: "August" },
+  { id: 9, name: "September" },
+  { id: 10, name: "October" },
+  { id: 11, name: "November" },
+  { id: 12, name: "December" },
 ];
 
 const COLORS = [
@@ -77,6 +98,11 @@ export default function DashboardPage({ user, onNavigate }) {
   const [investments, setInvestments] = useState([]);
   const [income, setIncome] = useState([]);
   const [getfinance, setgetfinance] = useState([]);
+const [getmonth, setGetMonth] = useState(0);
+
+const changemonth = (month) => {
+  setGetMonth(month);   // just update state
+}
   const [loading, setLoading] = useState(true);
 
   const [newItem, setNewItem] = useState({
@@ -138,6 +164,9 @@ const isIncomeTab = activeTab === "income";
     }
   }, [getfinance]);
 
+
+  
+
   useEffect(() => {
     if (!user?.id || !selectedCat) return;
 
@@ -184,8 +213,26 @@ const isIncomeTab = activeTab === "income";
       });
   }, [user,selectedCat]);
 
+useEffect(() => {
+  if (!user?.id || !selectedCat || !getmonth) return;
 
+  const fetchAll = async () => {
+    setLoading(true);
 
+    const [exp, inv, inc] = await Promise.all([
+      fetch(`/api/expenses/${user.id}/${selectedCat}/${getmonth}`).then(r => r.json()),
+      fetch(`/api/investments/${user.id}/${selectedCat}/${getmonth}`).then(r => r.json()),
+      fetch(`/api/income/${user.id}/${selectedCat}/${getmonth}`).then(r => r.json())
+    ]);
+
+    setExpenses(exp);
+    setInvestments(inv);
+    setIncome(inc);
+    setLoading(false);
+  };
+
+  fetchAll();
+}, [user?.id, selectedCat, getmonth]);
 
 
   const currentItems = isExpenseTab ? expenses : isInvestmentTab ? investments : income;
@@ -282,6 +329,43 @@ const isIncomeTab = activeTab === "income";
         return;
       }
 
+        if (isIncomeTab) {
+        const res = await fetch("/api/addincome", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: userId,
+            name: newItem.name,
+            category: newItem.category,
+            amount: parseFloat(newItem.amount),
+            date: newItem.date,
+            financeid: selectedCat,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          toast.warning(data.message);
+          return;
+        }
+
+        toast.success("Income added successfully!");
+
+        // ✅ update UI immediately (optional)
+        setCurrentItems((prev) => [...prev, item]);
+
+        // ✅ clear form
+        setNewItem({
+          name: "",
+          category: "",
+          amount: "",
+          date: new Date().toISOString().split("T")[0],
+        });
+
+        return;
+      }
+
       // fallback for non-expense tab
       setCurrentItems((prev) => [...prev, item]);
       setNewItem({
@@ -298,7 +382,7 @@ const isIncomeTab = activeTab === "income";
       toast.error("User not logged in");
       return;
     }
-    if (!isExpenseTab) {
+    if (isInvestmentTab) {
       const res = await fetch("/api/deleteinvestment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -316,7 +400,7 @@ const isIncomeTab = activeTab === "income";
 
       toast.success("Investment Delete successfully!");
       setInvestments((prev) => prev.filter((item) => item.id !== id));
-    } else {
+    } else if(isExpenseTab) {
       const res = await fetch("/api/deleteexpenses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -332,8 +416,26 @@ const isIncomeTab = activeTab === "income";
         return;
       }
 
-      toast.success("Investment Delete successfully!");
+      toast.success("Expense Delete successfully!");
       setExpenses((prev) => prev.filter((item) => item.id !== id));
+    } else if(isIncomeTab) {
+      const res = await fetch("/api/deleteincome", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: id,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.warning(data.message);
+        return;
+      }
+
+      toast.success("Income Delete successfully!");
+      setIncome((prev) => prev.filter((item) => item.id !== id));
     }
   };
 
@@ -368,13 +470,21 @@ const isIncomeTab = activeTab === "income";
     0,
   );
 
+    const safeincome = Array.isArray(income) ? income : [];
+
+  const totalincome = safeincome.reduce(
+    (sum, e) => sum + parseFloat(e.amount),
+    0,
+  );
+
   const safeInvestments = Array.isArray(investments) ? investments : [];
   const totalInvestments = safeInvestments.reduce(
     (sum, e) => sum + parseFloat(e.amount),
     0,
   );
 
-  const netSavings = totalInvestments - totalExpenses;
+  const netSavings = totalincome - totalExpenses;
+    const currentbalance = totalincome - totalExpenses- totalInvestments;
 
   // Format date and time
   const formatDate = (date) => {
@@ -469,6 +579,17 @@ const isIncomeTab = activeTab === "income";
               ))}
             </select>
 
+             <select
+  className="flex items-center gap-2 px-6 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg transition-all shadow-md hover:shadow-lg border border-white/30"
+  value={getmonth}
+  onChange={(e) => changemonth(e.target.value)}
+>
+  {MONTHS.map((cat) => (
+    <option key={cat.id} value={cat.id}>
+      {cat.name}
+    </option>
+  ))}
+</select>
             {/* Right Section - Logout Button */}
             <button
               onClick={() => onNavigate("login")}
@@ -503,7 +624,19 @@ const isIncomeTab = activeTab === "income";
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+            <div className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-slate-600 font-medium">Total Income</span>
+              <TrendingDown className="text-red-500" size={24} />
+            </div>
+            <p className="text-3xl font-bold text-red-500">
+              ₹{totalincome.toLocaleString()}
+            </p>
+            <p className="text-xs text-slate-500 mt-2">
+              {income.length} transactions
+            </p>
+          </div>
           <div className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-2">
               <span className="text-slate-600 font-medium">Total Expenses</span>
@@ -547,6 +680,23 @@ const isIncomeTab = activeTab === "income";
             </p>
             <p className="text-xs text-slate-500 mt-2">
               {netSavings >= 0 ? "Surplus" : "Deficit"}
+            </p>
+          </div>
+            <div className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition-shadow">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-slate-600 font-medium">Balance</span>
+              <DollarSign
+                className={currentbalance >= 0 ? "text-green-500" : "text-red-500"}
+                size={24}
+              />
+            </div>
+            <p
+              className={`text-3xl font-bold ${currentbalance >= 0 ? "text-green-500" : "text-red-500"}`}
+            >
+              ₹{Math.abs(currentbalance).toLocaleString()}
+            </p>
+            <p className="text-xs text-slate-500 mt-2">
+              {currentbalance >= 0 ? "Surplus" : "Deficit"}
             </p>
           </div>
         </div>
@@ -813,6 +963,7 @@ const isIncomeTab = activeTab === "income";
                       ₹{item.amount.toLocaleString()}
                     </span>
                     <button
+                     data-id={item.id}
                       onClick={() => handleDelete(item.id)}
                       className="text-red-500 hover:text-red-700 transition-colors"
                     >

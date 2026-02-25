@@ -271,6 +271,118 @@ app.post("/api/addinvestment", async (req, res) => {
 });
 
 
+/* =======================
+   investment API ✅
+======================= */
+app.post("/api/addincome", async (req, res) => {
+  console.log("STEP 0");
+
+  try {
+    const { user_id, name, category, amount, date,financeid } = req.body;
+
+    console.log("STEP 1", user_id, name, amount,financeid);
+
+    if (!user_id || !name || !category || !amount || !date || !financeid) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    await query(
+      `INSERT INTO income_data (user_id, name, category, amount,date,financialyear_id)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [user_id, name, category, amount, date,financeid]
+    );
+
+    console.log("STEP 2: Income inserted");
+
+    res.json({ success: true, message: "Income added successfully" });
+
+  } catch (err) {
+    console.error("check 👉", err);
+    res.status(500).json({ message: "DB error" });
+  }
+});
+
+app.get('/api/expenses/:userId/:financeId/:monthId', async (req, res) => {
+  const { userId, financeId, monthId } = req.params;
+
+  try {
+    let sql = '';
+    let params = [];
+
+    if (monthId == 0) {
+      sql = `
+        SELECT * 
+        FROM expenses 
+        WHERE user_id = $1 
+        AND delete_status = 1 
+        AND financialyear_id = $2 
+        ORDER BY date DESC
+      `;
+      params = [userId, financeId];
+    } 
+    else {
+      sql = `
+        SELECT * 
+        FROM expenses 
+        WHERE user_id = $1 
+        AND delete_status = 1 
+        AND financialyear_id = $2 
+        AND EXTRACT(MONTH FROM date) = $3
+        ORDER BY date DESC
+      `;
+      params = [userId, financeId, monthId];
+    }
+
+    const result = await query(sql, params);
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error("Error fetching expenses:", err);
+    res.status(500).json({ message: "DB error" });
+  }
+});
+
+app.get('/api/investments/:userId/:financeId/:monthId', async (req, res) => {
+  const { userId, financeId, monthId } = req.params;
+
+  try {
+    let sql = "";
+    let params = [];
+
+    if (monthId == 0) {
+      sql = `
+        SELECT * 
+        FROM investments 
+        WHERE user_id = $1 
+        AND delete_status = 1 
+        AND financialyear_id = $2 
+        ORDER BY date DESC
+      `;
+      params = [userId, financeId];
+    } 
+    else {
+      sql = `
+        SELECT * 
+        FROM investments 
+        WHERE user_id = $1 
+        AND delete_status = 1 
+        AND financialyear_id = $2 
+        AND EXTRACT(MONTH FROM date) = $3
+        ORDER BY date DESC
+      `;
+      params = [userId, financeId, monthId];
+    }
+
+    const result = await query(sql, params);
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error('Error fetching investments:', err);
+    res.status(500).json({ message: 'DB error' });
+  }
+});
+
+
 app.get('/api/expenses/:userId/:financeId', async (req, res) => {
   const userId = req.params.userId;
 const financeId = req.params.financeId;
@@ -310,6 +422,44 @@ const financeId = req.params.financeId;
       'SELECT * FROM income_data WHERE user_id = $1 and delete_status=1  and financialyear_id=$2 ORDER BY date DESC',
       [userId,financeId]
     );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching income:', err);
+    res.status(500).json({ message: 'DB error' });
+  }
+});
+
+
+app.get('/api/income/:userId/:financeId/:monthId', async (req, res) => {
+  const { userId, financeId, monthId } = req.params;
+  try {
+    let sql = "";
+    let params = [];
+
+    if (monthId == 0) {
+      sql = `
+        SELECT * 
+        FROM income_data 
+        WHERE user_id = $1 
+        AND delete_status = 1 
+        AND financialyear_id = $2 
+        ORDER BY date DESC
+      `;
+      params = [userId, financeId];
+    } else {
+      sql = `
+        SELECT * 
+        FROM income_data 
+        WHERE user_id = $1 
+        AND delete_status = 1 
+        AND financialyear_id = $2 
+        AND EXTRACT(MONTH FROM date) = $3
+        ORDER BY date DESC
+      `;
+      params = [userId, financeId, monthId];
+    }
+
+    const result = await query(sql, params);
     res.json(result.rows);
   } catch (err) {
     console.error('Error fetching income:', err);
@@ -381,6 +531,37 @@ app.post("/api/deleteexpenses", async (req, res) => {
 
     await query(
       `UPDATE expenses set delete_status='2' where id=$1`,
+      [id]
+    );
+
+    console.log("STEP 2: Investment deleted");
+
+    res.json({ success: true, message: "Expenses Deleted successfully" });
+
+  } catch (err) {
+    console.error("check 👉", err);
+    res.status(500).json({ message: "DB error" });
+  }
+});
+
+
+/* =======================
+   delete income API ✅
+======================= */
+app.post("/api/deleteincome", async (req, res) => {
+  console.log("STEP 0");
+
+  try {
+    const { id } = req.body;
+
+    console.log("STEP 1", id);
+
+    if (!id) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    await query(
+      `UPDATE income_data set delete_status='2' where id=$1`,
       [id]
     );
 
