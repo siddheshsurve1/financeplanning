@@ -50,18 +50,18 @@ const INVESTMENT_CATEGORIES = [
 ];
 
 const INCOME_CATEGORIES = [
- "Salary",
- "Business",
- "Freelance",
- "Dividends",
- "Interest",
- "Rental Income",
- "Capital Gains",
- "Other",
+  "Salary",
+  "Business",
+  "Freelance",
+  "Dividends",
+  "Interest",
+  "Rental Income",
+  "Capital Gains",
+  "Other",
 ];
 
 const MONTHS = [
-   { id: 0, name: "All Months" },
+  { id: 0, name: "All Months" },
   { id: 1, name: "January" },
   { id: 2, name: "February" },
   { id: 3, name: "March" },
@@ -98,11 +98,11 @@ export default function DashboardPage({ user, onNavigate }) {
   const [investments, setInvestments] = useState([]);
   const [income, setIncome] = useState([]);
   const [getfinance, setgetfinance] = useState([]);
-const [getmonth, setGetMonth] = useState(0);
+  const [getmonth, setGetMonth] = useState(0);
 
-const changemonth = (month) => {
-  setGetMonth(month);   // just update state
-}
+  const changemonth = (month) => {
+    setGetMonth(month);   // just update state
+  }
   const [loading, setLoading] = useState(true);
 
   const [newItem, setNewItem] = useState({
@@ -121,15 +121,15 @@ const changemonth = (month) => {
     return () => clearInterval(timer);
   }, []);
 
-const isExpenseTab = activeTab === "expenses";
-const isInvestmentTab = activeTab === "investments";
-const isIncomeTab = activeTab === "income";
+  const isExpenseTab = activeTab === "expenses";
+  const isInvestmentTab = activeTab === "investments";
+  const isIncomeTab = activeTab === "income";
 
- const setCurrentItems = isExpenseTab
-  ? setExpenses
-  : isInvestmentTab
-  ? setInvestments
-  : setIncome;   // new income state setter
+  const setCurrentItems = isExpenseTab
+    ? setExpenses
+    : isInvestmentTab
+      ? setInvestments
+      : setIncome;   // new income state setter
 
   const categories = isExpenseTab ? EXPENSE_CATEGORIES : isInvestmentTab ? INVESTMENT_CATEGORIES : INCOME_CATEGORIES;
 
@@ -165,7 +165,7 @@ const isIncomeTab = activeTab === "income";
   }, [getfinance]);
 
 
-  
+
 
   useEffect(() => {
     if (!user?.id || !selectedCat) return;
@@ -198,8 +198,8 @@ const isIncomeTab = activeTab === "income";
       });
   }, [user?.id, selectedCat]);
 
-    useEffect(() => {
-    if (!user?.id|| !selectedCat) return;
+  useEffect(() => {
+    if (!user?.id || !selectedCat) return;
 
     fetch(`/api/income/${user.id}/${selectedCat}`)
       .then(res => res.json())
@@ -211,28 +211,28 @@ const isIncomeTab = activeTab === "income";
         console.error("Failed to fetch income", err);
         setLoading(false);
       });
-  }, [user,selectedCat]);
+  }, [user, selectedCat]);
 
-useEffect(() => {
-  if (!user?.id || !selectedCat || !getmonth) return;
+  useEffect(() => {
+    if (!user?.id || !selectedCat || !getmonth) return;
 
-  const fetchAll = async () => {
-    setLoading(true);
+    const fetchAll = async () => {
+      setLoading(true);
 
-    const [exp, inv, inc] = await Promise.all([
-      fetch(`/api/expenses/${user.id}/${selectedCat}/${getmonth}`).then(r => r.json()),
-      fetch(`/api/investments/${user.id}/${selectedCat}/${getmonth}`).then(r => r.json()),
-      fetch(`/api/income/${user.id}/${selectedCat}/${getmonth}`).then(r => r.json())
-    ]);
+      const [exp, inv, inc] = await Promise.all([
+        fetch(`/api/expenses/${user.id}/${selectedCat}/${getmonth}`).then(r => r.json()),
+        fetch(`/api/investments/${user.id}/${selectedCat}/${getmonth}`).then(r => r.json()),
+        fetch(`/api/income/${user.id}/${selectedCat}/${getmonth}`).then(r => r.json())
+      ]);
 
-    setExpenses(exp);
-    setInvestments(inv);
-    setIncome(inc);
-    setLoading(false);
-  };
+      setExpenses(exp);
+      setInvestments(inv);
+      setIncome(inc);
+      setLoading(false);
+    };
 
-  fetchAll();
-}, [user?.id, selectedCat, getmonth]);
+    fetchAll();
+  }, [user?.id, selectedCat, getmonth]);
 
 
   const currentItems = isExpenseTab ? expenses : isInvestmentTab ? investments : income;
@@ -329,7 +329,7 @@ useEffect(() => {
         return;
       }
 
-        if (isIncomeTab) {
+      if (isIncomeTab) {
         const res = await fetch("/api/addincome", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -400,7 +400,7 @@ useEffect(() => {
 
       toast.success("Investment Delete successfully!");
       setInvestments((prev) => prev.filter((item) => item.id !== id));
-    } else if(isExpenseTab) {
+    } else if (isExpenseTab) {
       const res = await fetch("/api/deleteexpenses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -418,7 +418,7 @@ useEffect(() => {
 
       toast.success("Expense Delete successfully!");
       setExpenses((prev) => prev.filter((item) => item.id !== id));
-    } else if(isIncomeTab) {
+    } else if (isIncomeTab) {
       const res = await fetch("/api/deleteincome", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -470,7 +470,7 @@ useEffect(() => {
     0,
   );
 
-    const safeincome = Array.isArray(income) ? income : [];
+  const safeincome = Array.isArray(income) ? income : [];
 
   const totalincome = safeincome.reduce(
     (sum, e) => sum + parseFloat(e.amount),
@@ -484,7 +484,7 @@ useEffect(() => {
   );
 
   const netSavings = totalincome - totalExpenses;
-    const currentbalance = totalincome - totalExpenses- totalInvestments;
+  const currentbalance = totalincome - totalExpenses - totalInvestments;
 
   // Format date and time
   const formatDate = (date) => {
@@ -558,7 +558,7 @@ useEffect(() => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* <div className="flex items-center gap-2">
                 <div className="bg-white/20 backdrop-blur-sm p-2 rounded-lg">
                   <Shield size={20} />
                 </div>
@@ -566,7 +566,7 @@ useEffect(() => {
                   <p className="text-xs text-blue-100">Role</p>
                   <p className="text-sm font-semibold">Staff Member</p>
                 </div>
-              </div>
+              </div> */}
             </div>
             <select className="flex items-center gap-2 px-6 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg transition-all shadow-md hover:shadow-lg border border-white/30"
               value={selectedCat}
@@ -579,17 +579,17 @@ useEffect(() => {
               ))}
             </select>
 
-             <select
-  className="flex items-center gap-2 px-6 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg transition-all shadow-md hover:shadow-lg border border-white/30"
-  value={getmonth}
-  onChange={(e) => changemonth(e.target.value)}
->
-  {MONTHS.map((cat) => (
-    <option key={cat.id} value={cat.id}>
-      {cat.name}
-    </option>
-  ))}
-</select>
+            <select
+              className="flex items-center gap-2 px-6 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg transition-all shadow-md hover:shadow-lg border border-white/30"
+              value={getmonth}
+              onChange={(e) => changemonth(e.target.value)}
+            >
+              {MONTHS.map((cat) => (
+                <option key={cat.id} value={cat.id} className="text-gray-400">
+                  {cat.name}
+                </option>
+              ))}
+            </select>
             {/* Right Section - Logout Button */}
             <button
               onClick={() => onNavigate("login")}
@@ -625,7 +625,7 @@ useEffect(() => {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-            <div className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition-shadow">
+          <div className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-2">
               <span className="text-slate-600 font-medium">Total Income</span>
               <TrendingDown className="text-red-500" size={24} />
@@ -682,7 +682,7 @@ useEffect(() => {
               {netSavings >= 0 ? "Surplus" : "Deficit"}
             </p>
           </div>
-            <div className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition-shadow">
+          <div className="bg-white rounded-xl shadow p-6 hover:shadow-lg transition-shadow">
             <div className="flex items-center justify-between mb-2">
               <span className="text-slate-600 font-medium">Balance</span>
               <DollarSign
@@ -705,11 +705,11 @@ useEffect(() => {
         <div className="bg-white rounded-2xl shadow-lg p-6">
           {/* Tabs */}
           <div className="flex gap-2 mb-6 border-b">
-             <button
+            <button
               onClick={() => setActiveTab("income")}
               className={`px-6 py-3 font-medium transition-colors ${activeTab === "income"
-                  ? "border-b-2 border-blue-500 text-blue-600"
-                  : "text-slate-600 hover:text-slate-800"
+                ? "border-b-2 border-blue-500 text-blue-600"
+                : "text-slate-600 hover:text-slate-800"
                 }`}
             >
               Income
@@ -717,8 +717,8 @@ useEffect(() => {
             <button
               onClick={() => setActiveTab("expenses")}
               className={`px-6 py-3 font-medium transition-colors ${activeTab === "expenses"
-                  ? "border-b-2 border-blue-500 text-blue-600"
-                  : "text-slate-600 hover:text-slate-800"
+                ? "border-b-2 border-blue-500 text-blue-600"
+                : "text-slate-600 hover:text-slate-800"
                 }`}
             >
               Expenses
@@ -726,8 +726,8 @@ useEffect(() => {
             <button
               onClick={() => setActiveTab("investments")}
               className={`px-6 py-3 font-medium transition-colors ${activeTab === "investments"
-                  ? "border-b-2 border-blue-500 text-blue-600"
-                  : "text-slate-600 hover:text-slate-800"
+                ? "border-b-2 border-blue-500 text-blue-600"
+                : "text-slate-600 hover:text-slate-800"
                 }`}
             >
               Investments
@@ -737,7 +737,7 @@ useEffect(() => {
               onClick={() => setShowModal(true)}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 ml-auto mb-4"
             >
-              + Add {isExpenseTab ? "Expense" :isInvestmentTab ? "Investment" : "Income"}
+              + Add {isExpenseTab ? "Expense" : isInvestmentTab ? "Investment" : "Income"}
             </button>
           </div>
 
@@ -749,7 +749,7 @@ useEffect(() => {
               <div className="bg-white rounded-xl w-full max-w-2xl p-6 shadow-lg animate-fadeIn">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold">
-                    Add New {isExpenseTab ? "Expense" :isInvestmentTab ? "Investment" : "Income"}
+                    Add New {isExpenseTab ? "Expense" : isInvestmentTab ? "Investment" : "Income"}
                   </h3>
                   <button
                     onClick={() => setShowModal(false)}
@@ -963,7 +963,7 @@ useEffect(() => {
                       ₹{item.amount.toLocaleString()}
                     </span>
                     <button
-                     data-id={item.id}
+                      data-id={item.id}
                       onClick={() => handleDelete(item.id)}
                       className="text-red-500 hover:text-red-700 transition-colors"
                     >
