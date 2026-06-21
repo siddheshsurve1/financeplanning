@@ -11,7 +11,7 @@ const app = express();
 const allowedOrigins = [
   "http://127.0.0.1:5173",
   "http://localhost:5173",
-  "https://your-app-name.netlify.app" // replace once you have your actual Netlify URL
+  "https://financeplanningnew.netlify.app"
 ];
 
 app.use(
