@@ -66,9 +66,9 @@ export default function App() {
     <>
       <Toaster position="top-right" richColors />
 
-      <div style={{ padding: '10px', fontWeight: 'bold' }}>
+      {/* <div style={{ padding: '10px', fontWeight: 'bold' }}>
         Neon DB Status: {dbStatus}
-      </div>
+      </div> */}
 
       {currentPage === 'login' && (
         <LoginPage onNavigate={handleNavigation} />
